@@ -1,0 +1,94 @@
+/*
+CIS275 Queries
+Instructor: Alan Miles
+Michael Lauer
+*/
+
+SELECT   RepairNbr,
+	       CONVERT (VARCHAR(30), Description) AS Description,
+	       '$' +LTRIM(SUM(ExtendedPrice)) AS 'Total Repair Cost'
+FROM     STOVE_REPAIR,
+	       REPAIR_LINE_ITEM
+WHERE    RepairNbr = FK_RepairNbr
+GROUP BY RepairNbr,
+	       Description;
+
+
+ 
+SELECT   CONVERT (VARCHAR(8),i.InvoiceNbr) AS 'Invoice #',
+	       CONVERT (VARCHAR(22), i.InvoiceDt, 120) AS 'Invoice Date',
+	       CONVERT (VARCHAR(8), s.SerialNumber) AS 'Stove #'
+FROM     INVOICE AS i,
+	       INV_LINE_ITEM AS ili,
+	       STOVE AS s
+WHERE    (i.InvoiceNbr = ili.FK_InvoiceNbr
+AND      s.SerialNumber = ili.FK_StoveNbr)
+AND      (i.InvoiceDt BETWEEN '2002-05-01 00:00:00.000' 
+AND      '2002-05-31 23:59:00.000')
+ORDER BY i.InvoiceDt  ASC;
+
+
+
+SELECT   CONVERT (VARCHAR(30), s.Name) AS 'Supplier Name',
+	       '$' +LTRIM(STR(SUM(pli.ExtendedPrice), 8, 2)) AS 'PO Total'
+FROM     SUPPLIER AS s,
+	       PURCHASE_ORDER AS po,
+	       PO_LINE_ITEM AS pli
+WHERE    (s.SupplierNbr = po.FK_SupplierNbr
+AND      po.PONbr = pli.FK_PONbr)
+GROUP BY s.Name
+ORDER BY s.Name ASC;
+
+
+
+SELECT   CONVERT (VARCHAR(4), i.InvoiceNbr) AS 'Invoice #',
+	       s.Color AS 'Stove Color',
+	       COUNT(Color) AS 'Number of Stoves of this Color on the Invoice'
+FROM     INVOICE AS i,
+	       INV_LINE_ITEM AS ili,
+	       STOVE AS s
+WHERE    (i.InvoiceNbr = ili.FK_InvoiceNbr 
+AND      s.SerialNumber = ili.FK_StoveNbr)
+GROUP BY i.InvoiceNbr,
+	       s.Color
+ORDER BY i.InvoiceNbr,
+		     s.Color;
+
+
+
+SELECT   CAST ( c.CustomerID AS TINYINT ) AS 'Cust ID #',
+	       CONVERT (VARCHAR(25), c.Name) AS 'Customer Name',
+	       '$' + LTRIM(STR(SUM(ili.ExtendedPrice), 8, 2)) AS 'Total Invoice Extended Price'
+FROM     CUSTOMER AS c,
+	       INVOICE AS i,
+	       INV_LINE_ITEM AS ili
+WHERE    (c.CustomerID = i.FK_CustomerID
+AND      i.InvoiceNbr = ili.FK_InvoiceNbr)
+AND      c.StateProvince ='OR'
+GROUP BY c.CustomerID,
+	       c.Name
+ORDER BY c.CustomerID ASC;
+
+
+
+SELECT   CONVERT (TINYINT, InvoiceNbr) AS 'Invoice #',
+	       '$' +LTRIM(STR(COALESCE(SUM(Cost * Quantity),0), 8, 2)) AS 'Total Cost of All Parts'
+FROM     INVOICE,
+         INV_LINE_ITEM LEFT OUTER JOIN PART ON FK_PartNbr = PartNbr
+WHERE    InvoiceNbr = FK_InvoiceNbr
+GROUP BY InvoiceNbr;
+
+
+
+SELECT   CONVERT (TINYINT, i.InvoiceNbr) AS 'Invoice #',
+	       CONVERT (VARCHAR(25), c.Name) AS 'Customer Name',
+	       CONVERT (VARCHAR(12), p.PhoneNbr) AS 'Phone #',
+	       CONVERT (VARCHAR(35), e.EMailAddress) AS 'E-Mail Address'
+FROM     INVOICE AS i,
+	       PHONE as p,
+	       CUSTOMER as c,
+	       EMAIL as e
+Where    c.CustomerID = i.FK_CustomerID
+AND      c.CustomerID = e.FK_CustomerID
+AND      c.CustomerID = p.FK_CustomerID
+ORDER BY i.InvoiceNbr;
